@@ -11,9 +11,10 @@ import toast from 'react-hot-toast'
 import {
   ArrowLeft, Phone, Mail, Shield, Eye, Gavel, Tag,
   Calendar, Gauge, Fuel, Cog, Car, Palette, MapPin,
-  BadgeCheck, ChevronRight, ChevronLeft, ExternalLink, Star, Info,
-  Zap, Key, MessageSquare,
+  BadgeCheck, ChevronRight, ExternalLink, Star, Info,
+  Zap, Key,
 } from 'lucide-react'
+import { VehiclePlaceholder } from '@/components/vehicles/VehiclePlaceholder'
 import type { Vehicle, Bid, Store } from '@/types'
 
 export default function VehicleDetailPage() {
@@ -119,42 +120,18 @@ export default function VehicleDetailPage() {
 
             {/* Gallery */}
             <Card className="p-3">
-              {/* Main image with arrow navigation */}
-              <div className="aspect-[16/10] rounded-xl overflow-hidden bg-[var(--surface-1)] mb-2 relative group">
+              {/* Main image */}
+              <div className="aspect-[16/10] rounded-xl overflow-hidden bg-[var(--surface-1)] mb-2 relative">
                 {mainImage ? (
                   <img src={mainImage} alt={vehicle.title} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Car className="w-16 h-16 text-[var(--text-muted)]" />
-                  </div>
+                  <VehiclePlaceholder
+                    bodyType={vehicle.body_type}
+                    color={vehicle.exterior_color}
+                    label={vehicle.title}
+                    variant="detail"
+                  />
                 )}
-                {/* Left arrow */}
-                {allImages.length > 1 && (
-                  <button
-                    onClick={() => {
-                      const idx = allImages.findIndex(i => i.url === mainImage)
-                      const prev = idx <= 0 ? allImages.length - 1 : idx - 1
-                      setMainImage(allImages[prev].url)
-                    }}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                )}
-                {/* Right arrow */}
-                {allImages.length > 1 && (
-                  <button
-                    onClick={() => {
-                      const idx = allImages.findIndex(i => i.url === mainImage)
-                      const next = idx >= allImages.length - 1 ? 0 : idx + 1
-                      setMainImage(allImages[next].url)
-                    }}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity"
-                  >
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
-                )}
-                {/* Photo counter */}
                 {allImages.length > 0 && (
                   <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-black/60 text-white text-[10px] font-medium">
                     {allImages.findIndex(i => i.url === mainImage) + 1}/{allImages.length}
@@ -413,17 +390,16 @@ export default function VehicleDetailPage() {
                     {isAuthenticated && user?.account_type === 'partner' ? (
                       <Link href={`/dashboard/dealer/bid/${vehicle.id}`}>
                         <Button className="w-full" size="lg">
-                          <Gavel className="w-4 h-4" /> Place Dealer Bid
+                          <Gavel className="w-4 h-4" /> Place Your Bid
+                        </Button>
+                      </Link>
+                    ) : !isAuthenticated ? (
+                      <Link href="/auth/register?type=partner">
+                        <Button className="w-full" size="lg">
+                          <Gavel className="w-4 h-4" /> Bid as Dealer
                         </Button>
                       </Link>
                     ) : null}
-                    {/* Bid count info */}
-                    {vehicle.bid_count > 0 && (
-                      <div className="flex items-center justify-center gap-2 py-2 rounded-xl bg-[var(--surface-1)] text-xs text-[var(--text-muted)]">
-                        <Gavel className="w-3.5 h-3.5 text-brand-500" />
-                        <span><strong className="text-[var(--text-primary)]">{vehicle.bid_count}</strong> bids received{vehicle.highest_bid ? ` · Highest: ${formatPrice(vehicle.highest_bid)}` : ''}</span>
-                      </div>
-                    )}
                   </>
                 )}
 
@@ -434,42 +410,24 @@ export default function VehicleDetailPage() {
                         <MapPin className="w-4 h-4" /> View at Dealership
                       </Button>
                     </Link>
-                    {isAuthenticated ? (
-                      <TestDriveBooking vehicleTitle={vehicle.title} storeName={store.name} storePhone={store.phone} />
-                    ) : (
-                      <button onClick={() => { toast('Please sign in to book a test drive', { icon: '🔒' }); router.push('/auth/login') }}
-                        className="w-full h-10 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-1)] transition-colors flex items-center justify-center gap-2">
-                        🚗 Book a test drive
-                      </button>
-                    )}
+                    <TestDriveBooking vehicleTitle={vehicle.title} storeName={store.name} storePhone={store.phone} />
                   </>
                 )}
 
-                {/* Counter Offer */}
-                <CounterOffer price={vehicle.price} vehicleId={vehicle.id} vehicleTitle={vehicle.title} isAuthenticated={isAuthenticated} onLogin={() => router.push('/auth/login')} />
-
-                {/* Contact — auth gated */}
                 {seller?.phone && (
-                  isAuthenticated ? (
-                    <>
-                      <a href={`tel:${seller.phone}`}>
-                        <Button variant="secondary" className="w-full">
-                          <Phone className="w-4 h-4" /> Call Seller
-                        </Button>
-                      </a>
-                      <a href={`https://wa.me/91${seller.phone?.replace(/\D/g, '').replace(/^91/, '')}?text=${encodeURIComponent(`Hi, I'm interested in your ${vehicle.title} listed on XMotor for ${formatPrice(vehicle.price)}. Is it still available?`)}`} target="_blank" rel="noopener">
-                        <Button variant="secondary" className="w-full" style={{ background: '#25d366', color: 'white', borderColor: '#25d366' }}>
-                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.387 0-4.607-.8-6.382-2.148l-.446-.346-3.144 1.053 1.053-3.144-.346-.446A9.935 9.935 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
-                          WhatsApp
-                        </Button>
-                      </a>
-                    </>
-                  ) : (
-                    <button onClick={() => { toast('Please sign in to contact the seller', { icon: '🔒' }); router.push('/auth/login') }}
-                      className="w-full h-10 rounded-xl border border-[var(--border)] text-sm font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-1)] transition-colors flex items-center justify-center gap-2">
-                      <Phone className="w-4 h-4" /> Contact Seller
-                    </button>
-                  )
+                  <>
+                    <a href={`tel:${seller.phone}`}>
+                      <Button variant="secondary" className="w-full">
+                        <Phone className="w-4 h-4" /> Call Seller
+                      </Button>
+                    </a>
+                    <a href={`https://wa.me/91${seller.phone?.replace(/\D/g, '').replace(/^91/, '')}?text=${encodeURIComponent(`Hi, I'm interested in your ${vehicle.title} listed on XMotor for ${formatPrice(vehicle.price)}. Is it still available?`)}`} target="_blank" rel="noopener">
+                      <Button variant="secondary" className="w-full" style={{ background: '#25d366', color: 'white', borderColor: '#25d366' }}>
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.943 11.943 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.387 0-4.607-.8-6.382-2.148l-.446-.346-3.144 1.053 1.053-3.144-.346-.446A9.935 9.935 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
+                        WhatsApp
+                      </Button>
+                    </a>
+                  </>
                 )}
 
                 {/* Share button */}
@@ -553,7 +511,7 @@ function SpecRow({ label, value }: { label: string; value: string }) {
 function EMICalculator({ price }: { price: number }) {
   const [downPayment, setDownPayment] = useState(20)
   const [tenure, setTenure] = useState(36)
-  const [rate, setRate] = useState(9.5)
+  const rate = 9.5 // Annual interest rate
 
   const loanAmount = price * (1 - downPayment / 100)
   const monthlyRate = rate / 12 / 100
@@ -601,18 +559,6 @@ function EMICalculator({ price }: { price: number }) {
           </div>
         </div>
 
-        <div>
-          <div className="flex items-center justify-between mb-1">
-            <label className="text-xs font-medium text-[var(--text-muted)]">Interest Rate</label>
-            <span className="text-xs font-display font-bold">{rate}% p.a.</span>
-          </div>
-          <input type="range" min={6} max={18} step={0.5} value={rate} onChange={e => setRate(Number(e.target.value))}
-            className="w-full h-1.5 rounded-full appearance-none bg-[var(--surface-2)] cursor-pointer accent-brand-500 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-brand-500 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:shadow" />
-          <div className="flex justify-between mt-0.5 text-[9px] text-[var(--text-muted)]">
-            <span>6%</span><span>12%</span><span>18%</span>
-          </div>
-        </div>
-
         <div className="grid grid-cols-3 gap-2 text-center text-[10px]">
           <div className="p-2 rounded-lg bg-[var(--surface-1)]">
             <p className="text-[var(--text-muted)]">Loan Amount</p>
@@ -628,7 +574,7 @@ function EMICalculator({ price }: { price: number }) {
           </div>
         </div>
 
-        <p className="text-[9px] text-[var(--text-muted)] text-center">@ {rate}% p.a. Indicative only. Actual rates vary by bank and credit score.</p>
+        <p className="text-[9px] text-[var(--text-muted)] text-center">@ {rate}% p.a. Indicative only. Actual rates vary by bank.</p>
       </div>
     </Card>
   )
@@ -672,90 +618,6 @@ function TestDriveBooking({ vehicleTitle, storeName, storePhone }: { vehicleTitl
       <div className="flex gap-2">
         <button onClick={() => { setBooked(true); toast.success('Test drive request sent!') }} className="flex-1 h-8 rounded-lg bg-brand-500 text-white text-xs font-medium hover:bg-brand-600">Request</button>
         <button onClick={() => setShowForm(false)} className="h-8 px-3 rounded-lg border border-[var(--border)] text-xs">Cancel</button>
-      </div>
-    </div>
-  )
-}
-
-function CounterOffer({ price, vehicleId, vehicleTitle, isAuthenticated, onLogin }: {
-  price: number; vehicleId: number; vehicleTitle: string; isAuthenticated: boolean; onLogin: () => void
-}) {
-  const [open, setOpen] = useState(false)
-  const [amount, setAmount] = useState('')
-  const [message, setMessage] = useState('')
-  const [sent, setSent] = useState(false)
-
-  if (sent) {
-    return (
-      <div className="p-3 rounded-xl bg-green-50 border border-green-200 text-center">
-        <p className="text-sm font-bold text-green-800">✅ Offer sent!</p>
-        <p className="text-xs text-green-700 mt-0.5">The seller will review your offer and respond shortly.</p>
-      </div>
-    )
-  }
-
-  if (!open) {
-    return (
-      <button
-        onClick={() => {
-          if (!isAuthenticated) { toast('Please sign in to make an offer', { icon: '🔒' }); onLogin(); return }
-          setOpen(true)
-          setAmount(String(Math.round(price * 0.9)))
-        }}
-        className="w-full h-10 rounded-xl bg-brand-500 text-white text-sm font-medium hover:bg-brand-600 transition-colors flex items-center justify-center gap-2 active:scale-[0.98]"
-      >
-        <MessageSquare className="w-4 h-4" /> Make a Counter Offer
-      </button>
-    )
-  }
-
-  return (
-    <div className="p-3 rounded-xl bg-[var(--surface-1)] border border-[var(--border)] space-y-2.5 animate-slide-up">
-      <p className="text-xs font-semibold flex items-center gap-1.5">
-        <MessageSquare className="w-3.5 h-3.5 text-brand-500" /> Your offer for {vehicleTitle}
-      </p>
-      <div>
-        <label className="text-[10px] text-[var(--text-muted)] font-semibold uppercase">Offer amount (₹)</label>
-        <input
-          type="number"
-          value={amount}
-          onChange={e => setAmount(e.target.value)}
-          placeholder="Enter your price"
-          className="w-full h-10 px-3 rounded-xl border border-[var(--border)] text-sm font-display font-bold outline-none focus:border-brand-500 mt-1"
-        />
-        {Number(amount) > 0 && (
-          <p className="text-[10px] text-[var(--text-muted)] mt-1">
-            {Math.round(((price - Number(amount)) / price) * 100)}% below asking price of {formatPrice(price)}
-          </p>
-        )}
-      </div>
-      <div>
-        <label className="text-[10px] text-[var(--text-muted)] font-semibold uppercase">Message (optional)</label>
-        <textarea
-          value={message}
-          onChange={e => setMessage(e.target.value)}
-          placeholder="I'm interested because..."
-          rows={2}
-          className="w-full px-3 py-2 rounded-xl border border-[var(--border)] text-xs outline-none focus:border-brand-500 mt-1 resize-none"
-        />
-      </div>
-      <div className="flex gap-2">
-        <button onClick={async () => {
-          if (!amount || Number(amount) <= 0) { toast.error('Enter a valid amount'); return }
-          try {
-            const { offers: offersApi } = await import('@/lib/api')
-            await offersApi.create({ vehicle_id: vehicleId, amount: Number(amount), message })
-            setSent(true)
-            toast.success('Counter offer sent to seller!')
-          } catch (e: any) {
-            toast.error(e.data?.error || 'Failed to send offer')
-          }
-        }} className="flex-1 h-9 rounded-xl bg-brand-500 text-white text-xs font-medium hover:bg-brand-600 transition-colors">
-          Send Offer
-        </button>
-        <button onClick={() => setOpen(false)} className="h-9 px-4 rounded-xl border border-[var(--border)] text-xs font-medium">
-          Cancel
-        </button>
       </div>
     </div>
   )

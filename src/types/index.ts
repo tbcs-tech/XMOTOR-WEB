@@ -6,8 +6,6 @@ export interface User {
   username: string
   full_name: string
   phone: string
-  city: string
-  email_verified?: boolean
   account_type: 'individual' | 'partner' | 'admin'
   is_approved: boolean
   is_active: boolean
@@ -102,7 +100,6 @@ export interface Vehicle {
   status: string
   is_featured: boolean
   views: number
-  city: string
   created_at: string
   bid_count?: number
   highest_bid?: number

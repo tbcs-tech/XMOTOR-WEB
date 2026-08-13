@@ -409,5 +409,37 @@ export const offers = {
     apiFetch<{ message: string }>(`/offers/${offerId}/reject`, { method: 'POST' }),
 }
 
-const api = { auth, vehicles, bids, stores, search, notifications, admin, estimation, otp, offers }
+// ── AI API ────────────────────────────────────────────────────────────────
+
+export interface BidAdvice {
+  suggested_bid: number
+  bid_range: { aggressive: number; competitive: number; conservative: number }
+  win_probability: number
+  reasoning: string
+  strategy: string
+  market_position: string
+  market_estimate?: { fair_price: number; range: string }
+}
+
+export interface FraudCheck {
+  risk_score: number
+  risk_level: 'low' | 'medium' | 'high' | 'critical'
+  flags: { type: string; severity: string; detail: string }[]
+  recommendations: string[]
+  auto_approve: boolean
+}
+
+export const ai = {
+  /** Dealer-only. Suggested bid for a vehicle, with win probability. */
+  bidAdvice: (vehicleId: number, budget?: number) =>
+    apiFetch<BidAdvice>(
+      `/ai/bid-advice/${vehicleId}` + (budget ? `?budget=${budget}` : '')
+    ),
+
+  /** Admin-only. Risk analysis for a listing. */
+  fraudCheck: (vehicleId: number) =>
+    apiFetch<FraudCheck>(`/ai/fraud-check/${vehicleId}`),
+}
+
+const api = { auth, vehicles, bids, stores, search, notifications, admin, estimation, otp, offers, ai }
 export default api

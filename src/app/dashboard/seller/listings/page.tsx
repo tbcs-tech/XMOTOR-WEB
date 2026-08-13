@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useAuth } from '@/lib/store'
 import { vehicles as vehiclesApi } from '@/lib/api'
 import { Button, Badge, Card, Skeleton } from '@/components/ui'
+import { VehiclePlaceholder } from '@/components/vehicles/VehiclePlaceholder'
 import { formatPrice, getVehicleImage, timeAgo } from '@/lib/utils'
 import { Plus, Eye, Edit, Gavel, Shield, MapPin } from 'lucide-react'
 
@@ -39,9 +40,9 @@ export default function ListingsPage() {
           <div className="space-y-3">
             {items.map(v => (
               <Card key={v.id} className={`p-0 overflow-hidden ${v.status === 'rejected' ? 'opacity-60' : ''}`}>
-                <div className="flex flex-col sm:flex-row">
-                  <div className="w-full h-40 sm:w-36 sm:h-24 bg-[var(--surface-1)] shrink-0 overflow-hidden">
-                    {getVehicleImage(v.images) ? <img src={getVehicleImage(v.images)!} alt="" className="w-full h-full object-cover" /> : <div className="flex items-center justify-center h-full text-2xl opacity-20">🚗</div>}
+                <div className="flex">
+                  <div className="w-28 h-24 sm:w-36 bg-[var(--surface-1)] shrink-0 overflow-hidden">
+                    {getVehicleImage(v.images) ? <img src={getVehicleImage(v.images)!} alt="" className="w-full h-full object-cover" /> : <VehiclePlaceholder bodyType={v.body_type} color={v.exterior_color} />}
                   </div>
                   <div className="flex-1 p-3 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
@@ -57,7 +58,7 @@ export default function ListingsPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex sm:flex-col justify-start sm:justify-center gap-1 p-3 sm:pr-3 sm:p-0 border-t sm:border-t-0 border-[var(--border)]">
+                  <div className="flex flex-col justify-center gap-1 pr-3">
                     <Link href={`/dashboard/seller/vehicle/${v.id}/edit`} className="p-1.5 rounded-lg bg-[var(--surface-1)] hover:bg-[var(--surface-2)]"><Edit className="w-4 h-4 text-[var(--text-muted)]" /></Link>
                     <Link href={`/vehicle/${v.id}`} className="p-1.5 rounded-lg bg-[var(--surface-1)] hover:bg-[var(--surface-2)]"><Eye className="w-4 h-4 text-[var(--text-muted)]" /></Link>
                     <Link href={`/dashboard/seller/estimation/book/${v.id}`} className="p-1.5 rounded-lg bg-[var(--surface-1)] hover:bg-[var(--surface-2)]"><Shield className="w-4 h-4 text-[var(--text-muted)]" /></Link>

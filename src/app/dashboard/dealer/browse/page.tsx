@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useAuth } from '@/lib/store'
 import { vehicles as vehiclesApi } from '@/lib/api'
 import { Card, Button, Badge, Skeleton } from '@/components/ui'
+import { VehiclePlaceholder } from '@/components/vehicles/VehiclePlaceholder'
 import { formatPrice, formatMileage, getVehicleImage, timeAgo } from '@/lib/utils'
 import { Search, Gavel, MapPin, Calendar, Gauge, Fuel, Eye } from 'lucide-react'
 
@@ -50,9 +51,9 @@ export default function BrowsePage() {
           <div className="space-y-3">
             {items.map(v => (
               <Card key={v.id} className="p-0 overflow-hidden hover:shadow-md transition-all">
-                <div className="flex flex-col sm:flex-row">
-                  <div className="w-full h-40 sm:w-40 sm:h-28 bg-[var(--surface-1)] shrink-0 overflow-hidden">
-                    {getVehicleImage(v.images) ? <img src={getVehicleImage(v.images)!} alt="" className="w-full h-full object-cover" /> : <div className="flex items-center justify-center h-full text-3xl opacity-20">🚗</div>}
+                <div className="flex">
+                  <div className="w-32 h-28 sm:w-40 bg-[var(--surface-1)] shrink-0 overflow-hidden">
+                    {getVehicleImage(v.images) ? <img src={getVehicleImage(v.images)!} alt="" className="w-full h-full object-cover" /> : <VehiclePlaceholder bodyType={v.body_type} color={v.exterior_color} />}
                   </div>
                   <div className="flex-1 p-3 min-w-0">
                     <h3 className="font-medium text-sm truncate">{v.title}</h3>
@@ -72,7 +73,7 @@ export default function BrowsePage() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center p-3 sm:pr-3 sm:p-0 border-t sm:border-t-0 border-[var(--border)]">
+                  <div className="flex items-center pr-3">
                     <Link href={`/dashboard/dealer/bid/${v.id}`}>
                       <Button size="sm"><Gavel className="w-3.5 h-3.5" /> Bid</Button>
                     </Link>

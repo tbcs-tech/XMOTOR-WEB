@@ -6,8 +6,9 @@ import { useRouter } from 'next/navigation'
 import { Badge } from '@/components/ui'
 import { formatPrice, formatMileage, getVehicleImage } from '@/lib/utils'
 import { useAuth } from '@/lib/store'
-import { Fuel, Gauge, Calendar, Eye, Gavel, BadgeCheck, MapPin, Heart, MessageSquare } from 'lucide-react'
+import { Fuel, Gauge, Calendar, Eye, Gavel, BadgeCheck, MapPin, Heart } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { VehiclePlaceholder, NoPhotoTag } from './VehiclePlaceholder'
 import type { Vehicle } from '@/types'
 
 // Wishlist helpers
@@ -49,17 +50,6 @@ export function VehicleCard({ vehicle, showBidInfo = true }: VehicleCardProps) {
     toast(nowSaved ? 'Saved to wishlist' : 'Removed from wishlist', { icon: nowSaved ? '❤️' : '💔', duration: 1500 })
   }
 
-  const handleOffer = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    if (!isAuthenticated) {
-      toast('Please sign in to make an offer', { icon: '🔒' })
-      router.push('/auth/login')
-      return
-    }
-    router.push(`/vehicle/${vehicle.id}?offer=true`)
-  }
-
   return (
     <Link href={`/vehicle/${vehicle.id}`}>
       <article className="group rounded-2xl border border-[var(--border)] bg-[var(--surface-0)] overflow-hidden transition-all duration-200 hover:shadow-lg hover:shadow-black/5 hover:-translate-y-0.5">
@@ -67,9 +57,14 @@ export function VehicleCard({ vehicle, showBidInfo = true }: VehicleCardProps) {
           {imageUrl ? (
             <img src={imageUrl} alt={vehicle.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-[var(--text-muted)]">
-              <Gauge className="w-8 h-8" />
-            </div>
+            <>
+              <VehiclePlaceholder
+                bodyType={vehicle.body_type}
+                color={(vehicle as any).exterior_color}
+                label={vehicle.title}
+              />
+              <NoPhotoTag />
+            </>
           )}
           {/* Top-left badges */}
           <div className="absolute top-3 left-3 flex gap-1.5">
@@ -100,21 +95,24 @@ export function VehicleCard({ vehicle, showBidInfo = true }: VehicleCardProps) {
               <Heart className={`w-3.5 h-3.5 transition-colors ${saved ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
             </button>
           </div>
-          {/* Price — prominent */}
-          <p className="font-display font-extrabold text-lg text-brand-500 mt-1">{formatPrice(vehicle.price)}</p>
-          <div className="flex items-center gap-3 text-xs text-[var(--text-muted)] mt-1.5 mb-3">
+          <div className="flex items-center gap-3 text-xs text-[var(--text-muted)] mt-2 mb-3">
             <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" /> {vehicle.year}</span>
             <span className="flex items-center gap-1"><Gauge className="w-3.5 h-3.5" /> {formatMileage(vehicle.mileage)}</span>
             <span className="flex items-center gap-1"><Fuel className="w-3.5 h-3.5" /> {vehicle.fuel_type || 'N/A'}</span>
           </div>
           <div className="flex items-center justify-between pt-3 border-t border-[var(--border)]">
+            <div className="flex items-center gap-2">
+              {showBidInfo && vehicle.listing_type === 'bid' ? (
+                <span className="flex items-center gap-1 text-xs text-brand-600 font-medium">
+                  <Gavel className="w-3.5 h-3.5" /> {vehicle.bid_count || 0} bid{(vehicle.bid_count || 0) !== 1 ? 's' : ''}{vehicle.highest_bid ? ` · ${formatPrice(vehicle.highest_bid)}` : ''}
+                </span>
+              ) : (
+                <span className="text-xs text-[var(--text-muted)]">{vehicle.body_type || vehicle.fuel_type || '—'} · {vehicle.transmission || 'Auto'}</span>
+              )}
+            </div>
             <span className="flex items-center gap-1 text-xs text-[var(--text-muted)]">
               <MapPin className="w-3 h-3" /> {vehicle.store?.city || vehicle.city || 'India'}
             </span>
-            <button onClick={handleOffer}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-brand-50 text-brand-600 text-[10px] font-semibold hover:bg-brand-100 transition-colors active:scale-95">
-              <MessageSquare className="w-3 h-3" /> {vehicle.listing_type === 'bid' ? 'Make Offer' : 'Counter Offer'}
-            </button>
           </div>
         </div>
       </article>

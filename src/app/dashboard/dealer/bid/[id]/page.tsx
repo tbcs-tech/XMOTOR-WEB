@@ -2,10 +2,12 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { vehicles as vehiclesApi, bids as bidsApi } from '@/lib/api'
+import { vehicles as vehiclesApi, bids as bidsApi, ai as aiApi } from '@/lib/api'
+import type { BidAdvice } from '@/lib/api'
 import { useAuth } from '@/lib/store'
 import { Button, Card, Badge } from '@/components/ui'
 import { formatPrice, getVehicleImage } from '@/lib/utils'
+import { Sparkles, TrendingUp, Target } from 'lucide-react'
 import toast from 'react-hot-toast'
 export default function PlaceBidPage() {
   const { id } = useParams()
@@ -59,6 +61,8 @@ export default function PlaceBidPage() {
             </div>
           )}
         </Card>
+        <BidAdvisorPanel vehicleId={Number(id)} onUseSuggestion={(v) => setAmount(String(Math.round(v)))} />
+
         <Card className="p-5">
           <h2 className="font-display font-bold text-sm mb-4 pb-3 border-b border-[var(--border)]">{myBid ? 'Update Your Bid' : 'Place Your Bid'}</h2>
           {myBid && <div className="p-3 rounded-lg bg-brand-50 text-brand-700 text-sm font-semibold mb-4">Your current bid: {formatPrice(myBid.amount)}</div>}
@@ -71,5 +75,105 @@ export default function PlaceBidPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+
+function BidAdvisorPanel({ vehicleId, onUseSuggestion }: {
+  vehicleId: number
+  onUseSuggestion: (amount: number) => void
+}) {
+  const [advice, setAdvice] = useState<BidAdvice | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [failed, setFailed] = useState(false)
+
+  useEffect(() => {
+    aiApi.bidAdvice(vehicleId)
+      .then(setAdvice)
+      .catch(() => setFailed(true))
+      .finally(() => setLoading(false))
+  }, [vehicleId])
+
+  // Silently hide if the advisor is unavailable — never block the bid form
+  if (failed || (!loading && !advice)) return null
+
+  if (loading) {
+    return (
+      <Card className="p-4 mb-4">
+        <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
+          <Sparkles className="w-4 h-4 text-brand-500 animate-pulse" />
+          Analysing market and competing bids...
+        </div>
+      </Card>
+    )
+  }
+
+  const a = advice!
+  const winPct = Math.round((a.win_probability || 0) * 100)
+  const winColor =
+    winPct >= 70 ? 'text-green-600' : winPct >= 40 ? 'text-amber-600' : 'text-red-500'
+
+  return (
+    <Card className="p-5 mb-4 border-brand-200 bg-gradient-to-br from-brand-50/50 to-transparent">
+      <div className="flex items-center justify-between mb-3 pb-3 border-b border-[var(--border)]">
+        <h2 className="font-display font-bold text-sm flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-brand-500" /> Bid Advisor
+        </h2>
+        {a.market_position && (
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--surface-1)] font-medium capitalize">
+            {a.market_position.replace(/_/g, ' ')}
+          </span>
+        )}
+      </div>
+
+      <div className="flex items-end justify-between mb-4">
+        <div>
+          <p className="text-[10px] text-[var(--text-muted)] font-semibold uppercase">Suggested bid</p>
+          <p className="font-display font-extrabold text-2xl text-brand-600">
+            {formatPrice(a.suggested_bid)}
+          </p>
+        </div>
+        <div className="text-right">
+          <p className="text-[10px] text-[var(--text-muted)] font-semibold uppercase">Win chance</p>
+          <p className={`font-display font-bold text-xl ${winColor}`}>{winPct}%</p>
+        </div>
+      </div>
+
+      {a.bid_range && (
+        <div className="grid grid-cols-3 gap-2 mb-3">
+          {([
+            ['Conservative', a.bid_range.conservative],
+            ['Competitive', a.bid_range.competitive],
+            ['Aggressive', a.bid_range.aggressive],
+          ] as const).map(([label, val]) => (
+            <button
+              key={label}
+              onClick={() => onUseSuggestion(val)}
+              className="p-2 rounded-xl bg-[var(--surface-0)] border border-[var(--border)] hover:border-brand-400 transition-colors text-center active:scale-95"
+            >
+              <p className="text-[9px] text-[var(--text-muted)] font-semibold uppercase">{label}</p>
+              <p className="font-display font-bold text-xs mt-0.5">{formatPrice(val)}</p>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {a.reasoning && (
+        <p className="text-xs text-[var(--text-secondary)] leading-relaxed flex gap-2">
+          <TrendingUp className="w-3.5 h-3.5 text-brand-500 shrink-0 mt-0.5" />
+          <span>{a.reasoning}</span>
+        </p>
+      )}
+
+      {a.market_estimate?.fair_price ? (
+        <p className="text-[10px] text-[var(--text-muted)] mt-2 flex items-center gap-1">
+          <Target className="w-3 h-3" /> Fair market value {formatPrice(a.market_estimate.fair_price)}
+        </p>
+      ) : null}
+
+      <p className="text-[9px] text-[var(--text-muted)] mt-3 pt-2 border-t border-[var(--border)]">
+        Guidance only — based on market data and current bids. Your call.
+      </p>
+    </Card>
   )
 }
