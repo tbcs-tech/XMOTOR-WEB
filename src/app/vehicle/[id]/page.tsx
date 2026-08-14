@@ -6,15 +6,17 @@ import Link from 'next/link'
 import { vehicles as vehiclesApi, bids as bidsApi } from '@/lib/api'
 import { useAuth } from '@/lib/store'
 import { Button, Badge, Card, Skeleton } from '@/components/ui'
-import { formatPrice, formatMileage, timeAgo } from '@/lib/utils'
+import { formatPrice, formatMileage, timeAgo, listingAge, listingFreshness } from '@/lib/utils'
 import toast from 'react-hot-toast'
 import {
   ArrowLeft, Phone, Mail, Shield, Eye, Gavel, Tag,
   Calendar, Gauge, Fuel, Cog, Car, Palette, MapPin,
   BadgeCheck, ChevronRight, ExternalLink, Star, Info,
-  Zap, Key,
+  Zap, Key, Clock,
 } from 'lucide-react'
 import { VehiclePlaceholder } from '@/components/vehicles/VehiclePlaceholder'
+import { VehicleAngle, ANGLE_LABELS } from '@/components/vehicles/VehicleAngle'
+import type { Angle } from '@/components/vehicles/VehicleAngle'
 import type { Vehicle, Bid, Store } from '@/types'
 
 export default function VehicleDetailPage() {
@@ -28,6 +30,7 @@ export default function VehicleDetailPage() {
   const [estimationReport, setEstimationReport] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [mainImage, setMainImage] = useState<string | null>(null)
+  const [activeAngle, setActiveAngle] = useState<Angle>('front')
   const [bidAmount, setBidAmount] = useState('')
   const [bidMessage, setBidMessage] = useState('')
   const [bidding, setBidding] = useState(false)
@@ -125,16 +128,19 @@ export default function VehicleDetailPage() {
                 {mainImage ? (
                   <img src={mainImage} alt={vehicle.title} className="w-full h-full object-cover" />
                 ) : (
-                  <VehiclePlaceholder
+                  <VehicleAngle
+                    angle={activeAngle}
                     bodyType={vehicle.body_type}
                     color={vehicle.exterior_color}
-                    label={vehicle.title}
-                    variant="detail"
                   />
                 )}
-                {allImages.length > 0 && (
+                {allImages.length > 0 ? (
                   <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-black/60 text-white text-[10px] font-medium">
                     {allImages.findIndex(i => i.url === mainImage) + 1}/{allImages.length}
+                  </span>
+                ) : (
+                  <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-black/45 backdrop-blur-sm text-white text-[10px] font-medium">
+                    {ANGLE_LABELS[activeAngle]} — illustration, photos awaited
                   </span>
                 )}
               </div>
@@ -150,6 +156,23 @@ export default function VehicleDetailPage() {
                       }`}
                     >
                       <img src={img.url} alt={img.key} className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
+              {/* Angle strip when the seller hasn't uploaded photos yet */}
+              {allImages.length === 0 && (
+                <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+                  {(['front','rear','left','right','interior','dashboard','engine'] as Angle[]).map(a => (
+                    <button
+                      key={a}
+                      onClick={() => setActiveAngle(a)}
+                      title={ANGLE_LABELS[a]}
+                      className={`w-[60px] h-[44px] rounded-lg overflow-hidden shrink-0 border-2 transition-all ${
+                        activeAngle === a ? 'border-brand-500 ring-1 ring-brand-500/20' : 'border-transparent opacity-55 hover:opacity-100'
+                      }`}
+                    >
+                      <VehicleAngle angle={a} bodyType={vehicle.body_type} color={vehicle.exterior_color} />
                     </button>
                   ))}
                 </div>
@@ -180,6 +203,15 @@ export default function VehicleDetailPage() {
                   <p className="text-xs text-[var(--text-muted)] mt-1 flex items-center justify-end gap-1">
                     <Eye className="w-3 h-3" /> {vehicle.views} views
                   </p>
+                  {vehicle.created_at && (
+                    <p className={`text-xs mt-0.5 flex items-center justify-end gap-1 ${
+                      listingFreshness(vehicle.created_at) === 'new'
+                        ? 'text-green-600 font-medium'
+                        : 'text-[var(--text-muted)]'
+                    }`}>
+                      <Clock className="w-3 h-3" /> {listingAge(vehicle.created_at)}
+                    </p>
+                  )}
                 </div>
               </div>
             </Card>

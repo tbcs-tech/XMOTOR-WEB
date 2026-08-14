@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { vehicles as vehiclesApi } from '@/lib/api'
 import { Button, Badge, Card, Skeleton } from '@/components/ui'
 import { VehiclePlaceholder } from '@/components/vehicles/VehiclePlaceholder'
-import { formatPrice, getVehicleImage } from '@/lib/utils'
+import { formatPrice, getVehicleImage, listingDays, listingFreshness } from '@/lib/utils'
 import { Plus, Eye, Edit, Package , ImagePlus } from 'lucide-react'
 
 export default function DealerInventoryPage() {
@@ -40,6 +40,7 @@ export default function DealerInventoryPage() {
               <th className="text-left p-3 text-xs font-semibold text-[var(--text-muted)]">Vehicle</th>
               <th className="p-3 text-xs text-left">Price</th>
               <th className="p-3 text-xs text-left">Status</th>
+              <th className="p-3 text-xs text-left">Age</th>
               <th className="p-3 text-xs text-left">Views</th>
               <th className="p-3 text-xs text-right">Actions</th>
             </tr></thead>
@@ -53,6 +54,17 @@ export default function DealerInventoryPage() {
                   )}</div></div></td>
                 <td className="p-3 font-display font-bold text-brand-500">{formatPrice(v.price)}</td>
                 <td className="p-3"><Badge variant={v.status === 'approved' ? 'success' : v.status === 'pending' || v.status === 'store_only' ? 'warning' : 'default'}>{v.status}</Badge></td>
+                <td className="p-3">
+                  {v.created_at ? (
+                    <span className={`text-xs font-medium ${
+                      listingFreshness(v.created_at) === 'stale' ? 'text-red-600'
+                      : listingFreshness(v.created_at) === 'aging' ? 'text-amber-600'
+                      : 'text-[var(--text-muted)]'
+                    }`}>
+                      {listingDays(v.created_at)}d
+                    </span>
+                  ) : <span className="text-xs text-[var(--text-muted)]">—</span>}
+                </td>
                 <td className="p-3 text-[var(--text-muted)]">{v.views || 0}</td>
                 <td className="p-3 text-right"><div className="flex justify-end gap-1"><Link href={`/vehicle/${v.id}`} className="p-1.5 rounded-lg bg-[var(--surface-1)] hover:bg-[var(--surface-2)]"><Eye className="w-4 h-4 text-[var(--text-muted)]" /></Link></div></td>
               </tr>

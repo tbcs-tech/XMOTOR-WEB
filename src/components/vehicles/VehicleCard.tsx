@@ -4,9 +4,9 @@ import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Badge } from '@/components/ui'
-import { formatPrice, formatMileage, getVehicleImage } from '@/lib/utils'
+import { formatPrice, formatMileage, getVehicleImage, listingAge, listingFreshness } from '@/lib/utils'
 import { useAuth } from '@/lib/store'
-import { Fuel, Gauge, Calendar, Eye, Gavel, BadgeCheck, MapPin, Heart } from 'lucide-react'
+import { Fuel, Gauge, Calendar, Eye, Gavel, BadgeCheck, MapPin, Heart, Clock } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { VehiclePlaceholder, NoPhotoTag } from './VehiclePlaceholder'
 import type { Vehicle } from '@/types'
@@ -68,6 +68,11 @@ export function VehicleCard({ vehicle, showBidInfo = true }: VehicleCardProps) {
           )}
           {/* Top-left badges */}
           <div className="absolute top-3 left-3 flex gap-1.5">
+            {listingFreshness(vehicle.created_at) === 'new' && (
+              <span className="px-2 py-0.5 rounded-md bg-green-500 text-white text-[10px] font-semibold shadow-sm">
+                Just listed
+              </span>
+            )}
             {vehicle.is_featured && <Badge variant="brand">Featured</Badge>}
             {vehicle.listing_type === 'bid' && <Badge variant="warning">Open for Bids</Badge>}
           </div>
@@ -101,18 +106,22 @@ export function VehicleCard({ vehicle, showBidInfo = true }: VehicleCardProps) {
             <span className="flex items-center gap-1"><Fuel className="w-3.5 h-3.5" /> {vehicle.fuel_type || 'N/A'}</span>
           </div>
           <div className="flex items-center justify-between pt-3 border-t border-[var(--border)]">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               {showBidInfo && vehicle.listing_type === 'bid' ? (
-                <span className="flex items-center gap-1 text-xs text-brand-600 font-medium">
-                  <Gavel className="w-3.5 h-3.5" /> {vehicle.bid_count || 0} bid{(vehicle.bid_count || 0) !== 1 ? 's' : ''}{vehicle.highest_bid ? ` · ${formatPrice(vehicle.highest_bid)}` : ''}
+                <span className="flex items-center gap-1 text-xs text-brand-600 font-medium truncate">
+                  <Gavel className="w-3.5 h-3.5 shrink-0" /> {vehicle.bid_count || 0} bid{(vehicle.bid_count || 0) !== 1 ? 's' : ''}{vehicle.highest_bid ? ` · ${formatPrice(vehicle.highest_bid)}` : ''}
                 </span>
               ) : (
-                <span className="text-xs text-[var(--text-muted)]">{vehicle.body_type || vehicle.fuel_type || '—'} · {vehicle.transmission || 'Auto'}</span>
+                <span className="flex items-center gap-1 text-xs text-[var(--text-muted)] truncate">
+                  <MapPin className="w-3 h-3 shrink-0" /> {vehicle.store?.city || vehicle.city || 'India'}
+                </span>
               )}
             </div>
-            <span className="flex items-center gap-1 text-xs text-[var(--text-muted)]">
-              <MapPin className="w-3 h-3" /> {vehicle.store?.city || vehicle.city || 'India'}
-            </span>
+            {vehicle.created_at && (
+              <span className="flex items-center gap-1 text-xs text-[var(--text-muted)] shrink-0">
+                <Clock className="w-3 h-3" /> {listingAge(vehicle.created_at)}
+              </span>
+            )}
           </div>
         </div>
       </article>
