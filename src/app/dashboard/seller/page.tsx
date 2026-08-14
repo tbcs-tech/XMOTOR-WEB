@@ -248,3 +248,6 @@ function OffersSection({ vehicleIds }: { vehicleIds: number[] }) {
           ))}
         </div>
       )}
+    </Card>
+  )
+}
