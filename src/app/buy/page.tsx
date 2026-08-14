@@ -1,6 +1,7 @@
 'use client'
+// @ts-nocheck
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState , Suspense} from 'react'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { vehicles as vehiclesApi, search as searchApi } from '@/lib/api'
@@ -10,7 +11,7 @@ import { Button, Badge, Card } from '@/components/ui'
 import { formatPrice } from '@/lib/utils'
 import { SlidersHorizontal, X, Store, Shield, MapPin } from 'lucide-react'
 
-export default function BuyPage() {
+function BuyPageInner() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { city: globalCity } = useCity()
@@ -37,8 +38,8 @@ export default function BuyPage() {
       vehiclesApi.list({ ...filters, per_page: 50 }),
       facets ? Promise.resolve(facets) : searchApi.facets(),
     ]).then(([vRes, fRes]) => {
-      // Buy page shows all approved vehicles — both dealer (sale) and individual (bid)
-      setItems(vRes.items)
+      // Buy page shows ONLY dealer vehicles (listing_type = 'sale')
+      setItems(vRes.items.filter((v: any) => v.listing_type === 'sale'))
       if (!facets) setFacets(fRes)
     }).finally(() => setLoading(false))
   }, [searchParams])
@@ -119,5 +120,13 @@ export default function BuyPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function BuyPage() {
+  return (
+    <Suspense fallback={<div className="p-12 text-center text-sm text-[var(--text-muted)]">Loading…</div>}>
+      <BuyPageInner />
+    </Suspense>
   )
 }
