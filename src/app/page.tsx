@@ -14,20 +14,28 @@ export default function HomePage() {
   const [dealers, setDealers] = useState<any[]>([])
   const [facets, setFacets] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const { city } = useCity()
 
   useEffect(() => {
     const params: any = { per_page: 12, sort: 'newest' }
     if (city && city !== 'All India') params.city = city
 
-    Promise.all([
+    // allSettled, not all: one failing endpoint should hide its own section,
+    // not blank the entire homepage.
+    Promise.allSettled([
       vehiclesApi.list(params),
       storesApi.list(),
       searchApi.facets(),
-    ]).then(([vRes, sRes, fRes]) => {
-      setFeatured(vRes.items)
-      setDealers(sRes.stores)
-      setFacets(fRes)
+    ]).then(([v, s, f]) => {
+      if (v.status === 'fulfilled') {
+        setFeatured(v.value.items || [])
+      } else {
+        console.error('vehicles failed', v.reason)
+        setLoadError(true)
+      }
+      if (s.status === 'fulfilled') setDealers(s.value.stores || [])
+      if (f.status === 'fulfilled') setFacets(f.value)
     }).finally(() => setLoading(false))
   }, [city])
 
@@ -61,12 +69,40 @@ export default function HomePage() {
             </div>
             <Link href="/explore" className="text-xs font-medium text-brand-500 flex items-center gap-1 hover:text-brand-600">View all <ChevronRight className="w-3.5 h-3.5" /></Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {loading
-              ? [1,2,3,4].map(i => <VehicleCardSkeleton key={i} />)
-              : featured.slice(0, 8).map(v => <VehicleCard key={v.id} vehicle={v} />)
-            }
-          </div>
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {[1,2,3,4].map(i => <VehicleCardSkeleton key={i} />)}
+            </div>
+          ) : loadError ? (
+            <Card className="p-10 text-center">
+              <p className="font-display font-bold">Couldn't load listings</p>
+              <p className="text-sm text-[var(--text-muted)] mt-1">
+                Something went wrong at our end. Please try again in a moment.
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                className="mt-4 px-4 py-2 rounded-xl bg-brand-500 text-white text-sm font-medium"
+              >
+                Retry
+              </button>
+            </Card>
+          ) : featured.length === 0 ? (
+            <Card className="p-10 text-center">
+              <p className="font-display font-bold">No listings in {city} yet</p>
+              <p className="text-sm text-[var(--text-muted)] mt-1">
+                Be the first to list your vehicle here.
+              </p>
+              <Link href="/dashboard/seller/sell">
+                <button className="mt-4 px-4 py-2 rounded-xl bg-brand-500 text-white text-sm font-medium">
+                  Sell your car
+                </button>
+              </Link>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {featured.slice(0, 8).map(v => <VehicleCard key={v.id} vehicle={v} />)}
+            </div>
+          )}
         </div>
 
         {/* Trust bar */}
