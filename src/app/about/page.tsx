@@ -3,6 +3,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { Card } from '@/components/ui'
+import { LEGAL } from '@/lib/legal'
 import { Shield, Users, Zap, Globe, Mail, Phone, MapPin, MessageCircle } from 'lucide-react'
 
 export default function AboutPage() {
@@ -83,10 +84,10 @@ export default function AboutPage() {
           <h2 className="font-display font-extrabold text-xl text-center mb-6">Get in touch</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { icon: <Phone className="w-5 h-5" />, title: 'Call us', value: '+91 98765 43210', sub: 'Mon–Sat, 9AM–7PM' },
-              { icon: <Mail className="w-5 h-5" />, title: 'Email', value: 'support@xmotor.in', sub: 'Response within 4 hours' },
-              { icon: <MessageCircle className="w-5 h-5" />, title: 'WhatsApp', value: '+91 98765 43210', sub: 'Available 24×7' },
-              { icon: <MapPin className="w-5 h-5" />, title: 'Head Office', value: 'Mumbai, MH', sub: 'India — 400001' },
+              { icon: <Phone className="w-5 h-5" />, title: 'Call us', value: LEGAL.supportPhone, sub: LEGAL.supportHours },
+              { icon: <Mail className="w-5 h-5" />, title: 'Email', value: LEGAL.supportEmail, sub: 'Response within a business day' },
+              { icon: <MessageCircle className="w-5 h-5" />, title: 'WhatsApp', value: LEGAL.supportPhone, sub: 'Fastest response' },
+              { icon: <MapPin className="w-5 h-5" />, title: 'Registered office', value: LEGAL.city, sub: LEGAL.state },
             ].map((c, i) => (
               <Card key={i} className="p-4 text-center">
                 <div className="w-9 h-9 rounded-xl bg-[var(--surface-1)] flex items-center justify-center mx-auto mb-2 text-[var(--text-muted)]">{c.icon}</div>
@@ -96,6 +97,11 @@ export default function AboutPage() {
               </Card>
             ))}
           </div>
+          <p className="text-center mt-4">
+            <Link href="/contact" className="text-xs text-brand-500 hover:underline">
+              Full contact details &amp; grievance officer →
+            </Link>
+          </p>
         </div>
       </div>
     </div>

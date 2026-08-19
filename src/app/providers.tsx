@@ -6,6 +6,7 @@ import { Header } from '@/components/layout/Header'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { AIChatSearch } from '@/components/search/AIChatSearch'
 import { ScrollButton } from '@/components/layout/ScrollButton'
+import { Footer } from '@/components/layout/Footer'
 import { useAuth } from '@/lib/store'
 import { connectSocket, disconnectSocket } from '@/lib/socket'
 import { useNotificationPolling } from '@/hooks/useNotifications'
@@ -39,10 +40,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <>
       <Header />
-      <main className="min-h-[calc(100dvh-3.5rem)] pt-14 pb-16 md:pb-0 overflow-x-hidden">
-        <div className="w-full max-w-[100vw] overflow-x-hidden">
+      <main className="min-h-[calc(100dvh-3.5rem)] pt-14 pb-16 md:pb-0 overflow-x-hidden flex flex-col">
+        <div className="w-full max-w-[100vw] overflow-x-hidden flex-1">
           {children}
         </div>
+        <Footer />
       </main>
       <BottomNav />
       <ScrollButton />
